@@ -1,0 +1,151 @@
+INCLUDE Irvine32.inc
+
+; Энд хэрэглэгчийн оролтыг хадгалах зориулалттай хувьсагчид болон тэдгээрийг оролцуулан програмын текст мессежүүдийг тодорхойлж байна.
+
+.data
+codeTitle        BYTE "--------- Math Magic ---------", 0
+directions       BYTE "Enter 2 numbers and choose an operation.", 0
+prompt1          BYTE "First number: ", 0
+prompt2          BYTE "Second number: ", 0
+operationPrompt  BYTE "Choose operation (+, -, *, /): ", 0
+invalidOp        BYTE "Invalid operation", 0
+equals           BYTE " = ", 0
+plus             BYTE " + ", 0
+minus            BYTE " - ", 0
+times            BYTE " * ", 0
+divide           BYTE " / ", 0
+remaintxt        BYTE " remainder ", 0
+num1             DWORD ?
+num2             DWORD ?
+total            DWORD ?
+remainder        DWORD ?
+op               BYTE ?
+
+
+
+.code
+main PROC
+    ;Эхлээд удиртгалыг консолд хэвлэнэ. WriteString процедурыг ашиглан текстийг хэвлэх бөгөөд CrLf нь шинэ мөрөнд шилжинэ.
+    mov     edx, OFFSET codeTitle
+    call    WriteString
+    call    CrLf
+    mov     edx, OFFSET directions
+    call    WriteString
+    call    CrLf
+    
+
+    ;Хэрэглэгчээс эхний тоог авах, энэ тоог num1 хувьсагчид хадгална.
+    mov     edx, OFFSET prompt1
+    call    WriteString
+    call    ReadInt
+    mov     num1, eax
+    
+
+    ;Хоёр дахь тоог адилхан аргаар авах ба num2 хувьсагчид хадгална.
+    mov     edx, OFFSET prompt2
+    call    WriteString
+    call    ReadInt
+    mov     num2, eax
+    
+
+    ;Хэрэглэгчээс үйлдлийн тэмдгийг авах (нэмэх, хасах, үржүүлэх, хуваах). Тэмдгийг op хувьсагчид хадгална.
+    mov     edx, OFFSET operationPrompt
+    call    WriteString
+    call    ReadChar
+    mov     op, al
+    call    CrLf
+    
+
+    ;Тооцоолол хийхээс өмнө ажиллуулах үйлдлийг тодорхойлох. Тохирох үйлдэлд алгасах буюу jmp команд ашиглна.
+    cmp     op, '+'
+    je      addNumbers
+    cmp     op, '-'
+    je      subtractNumbers
+    cmp     op, '*'
+    je      multiplyNumbers
+    cmp     op, '/'
+    je      divideNumbers
+    jmp     invalidOperation
+    
+
+addNumbers:
+    mov     eax, num1       ; Эхний тоог EAX регистрт хуулах
+    add     eax, num2       ; Хоёр дахь тоог EAX регистртэй нэмэх
+    mov     total, eax      ; Нийлбэрийг total хувьсагчид хадгалах
+    jmp     printResult     ; printResult процедур руу алгасах
+
+subtractNumbers:
+    mov     eax, num1       ; Эхний тоог EAX регистрт хуулах
+    sub     eax, num2       ; Хоёр дахь тоог EAX регистрээс хасах
+    mov     total, eax      ; Үлдэгдлийг total хувьсагчид хадгалах
+    jmp     printResult     ; printResult процедур руу алгасах
+
+multiplyNumbers:
+    mov     eax, num1   ; Эхний тоог EAX регистрт хуулах
+    mov     ebx, num2   ; Хоёр дахь тоог EBX регистрт хуулах
+    mul     ebx         ; EAX ба EBX-г үржүүлэх, үр дүнг EAX-д хадгалах
+    mov     total, eax  ; Үр дүнг total хувьсагчид хадгалах
+    jmp     printResult ; printResult процедур руу алгасах
+
+divideNumbers:
+    mov     eax, num1        ; Эхний тоог EAX регистрт хуулна
+    mov     ebx, num2        ; Хоёр дахь тоог EBX регистрт хуулна
+    xor     edx, edx         ; EDX регистрийг тэглэх (хуваах үед ашиглана)
+    div     ebx              ; EAX-г EBX-д хуваах, үр дүнг EAX, үлдэгдлийг EDX-д хадгална
+    mov     total, eax       ; Хуваах үр дүнг total хувьсагчид хадгална
+    mov     remainder, edx   ; Үлдэгдлийг remainder хувьсагчид хадгална
+    jmp     printResultDiv   ; printResultDiv процедур руу шилжинэ
+
+
+invalidOperation:
+    mov     edx, OFFSET invalidOp
+    call    WriteString
+    jmp     exitProcedure
+
+printResult:
+    mov     eax, num1           ; Эхний тоог EAX регистрт хуулна
+    call    WriteDec            ; Эхний тоог хэвлэнэ
+    mov     al, op              ; Үйлдлийн тэмдгийг AL регистрт хуулна
+    call    WriteChar           ; Үйлдлийн тэмдгийг хэвлэнэ
+    mov     eax, num2           ; Хоёр дахь тоог EAX регистрт хуулна
+    call    WriteDec            ; Хоёр дахь тоог хэвлэнэ
+    mov     edx, OFFSET equals  ; Тэнцүүлэх тэмдгийн хаягийг EDX регистрт хуулна
+    call    WriteString         ; "=" тэмдгийг хэвлэнэ
+    mov     eax, total          ; Нийлбэрийн үр дүнг EAX регистрт хуулна
+    call    WriteDec            ; Нийлбэрийн үр дүнг хэвлэнэ
+    jmp     exitProcedure       ; exitProcedure процедур руу шилжинэ
+
+
+printResultDiv:
+    ; Print num1
+    mov     eax, num1
+    call    WriteDec
+    ; Print the divide sign
+    mov     edx, OFFSET divide
+    call    WriteString
+    ; Print num2
+    mov     eax, num2
+    call    WriteDec
+    ; tentsuu temdegiig hevleh
+    mov     edx, OFFSET equals
+    call    WriteString
+    ; total hevleh
+    mov     eax, total
+    call    WriteDec
+    ; uldegdeliig hevleh
+    mov     edx, OFFSET remaintxt
+    call    WriteString
+    mov     eax, remainder
+    call    WriteDec
+    jmp     exitProcedure
+
+    ; Хуваах үйлдлийн үр дүнг мөн адилхан аргаар хэвлэх, гэхдээ үлдэгдлийг нэмж хэвлэх
+
+
+exitProcedure:
+    call    CrLf
+    call    CrLf
+    exit
+
+main ENDP
+END main
